@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import socketIOClient from 'socket.io-client';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress,List } from '@mui/material';
 import { UserItem } from './UserItem';
 import { PieChartComponent } from './PieChartComponent';
 import { fetchAndUpdateData } from './fetchAndUpdateData';
@@ -26,10 +26,10 @@ export default function MostUsersTweetsPage() {
     }
 
     return (
-        <Box display="flex" justifyContent="center" m={1} p={1} bgcolor="background.paper">
-            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <Box sx={{display:"flex",justifyContent:"space-around",p:1}}>
+            <List sx={{ display: "grid", gridTemplateColumns:"1fr 1fr ",columnGap:"30px",width:"35%"}}>
                 {dbData.map(item => <UserItem key={item.user} user={item.user} count={item.count} />)}
-            </Box>
+            </List>
             <PieChartComponent data={dbData} />
         </Box>
     );

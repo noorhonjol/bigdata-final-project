@@ -2,7 +2,7 @@ import org.apache.log4j.BasicConfigurator
 import org.apache.log4j.varia.NullAppender
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructField, StructType}
 
 object Main {
 
@@ -17,11 +17,11 @@ object Main {
 
   val schema: StructType = StructType(
     Array(
-      StructField("id", StringType, nullable = true),
-      StructField("date", StringType, nullable = true),
+      StructField("id", LongType, nullable = true),
+      StructField("date", LongType, nullable = true),
       StructField("user", StringType,nullable = true),
       StructField("text", StringType, nullable = true),
-      StructField("retweets", StringType, nullable = true)
+      StructField("retweets", IntegerType, nullable = true)
     )
   )
 
@@ -35,11 +35,13 @@ object Main {
     val dfFromStream = getDataFrameFromStream(spark)
 
     val query = dfFromStream.writeStream.foreachBatch { (batchDF: DataFrame, _: Long) =>
+
       writeToMongoDb(batchDF, Configs.databaseName, Configs.collectionName)
 
       statisticsOperationAndSendToKafka(spark)
 
       batchDF.show()
+
     }.start()
 
     query.awaitTermination()
@@ -65,9 +67,14 @@ object Main {
       .option("subscribe", Configs.topicSubscribed)
       .load()
 
-    df.selectExpr("CAST(value AS STRING) as json")
+    val dfWithTimestamp =df.selectExpr("CAST(value AS STRING) as json")
       .select(from_json($"json", schema).as("data"))
       .select("data.*")
+
+    val dfWithDate = dfWithTimestamp.withColumn("date",to_timestamp(from_unixtime($"date"/ 1000)))
+
+
+    dfWithDate
   }
 
   private def writeToMongoDb(dataFrame: DataFrame, databaseName: String, collectionName: String): Unit = {

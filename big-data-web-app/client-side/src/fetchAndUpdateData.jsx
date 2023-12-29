@@ -7,7 +7,6 @@ export const fetchAndUpdateData = (socket, setDataCallback) => {
                 item.user = item.user.split(' ')[0];
             });
             setDataCallback(newData);
-            console.log(newData)
             localStorage.setItem('cachedData', JSON.stringify(newData));
         } catch (error) {
             console.error('Error parsing data:', error);

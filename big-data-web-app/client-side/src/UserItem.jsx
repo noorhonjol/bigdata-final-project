@@ -1,11 +1,14 @@
 /* eslint-disable react/prop-types */
-import { Box, Typography } from '@mui/material';
+import {  ListItem, Typography } from '@mui/material';
 
 export const UserItem = ({ user, count }) => (
-    <Box>
-        <Typography variant="h6" gutterBottom>
+    <ListItem sx={{display:"flex",justifyContent:"space-between"}}>
+        <Typography  >
             {user}
-            <Typography variant="span"> ||{count}</Typography>
         </Typography>
-    </Box>
+
+        <Typography >
+            {count}
+        </Typography>
+    </ListItem>
 );

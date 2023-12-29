@@ -10,7 +10,7 @@ from kafka import KafkaProducer
 # Define a class for Tweet
 class Tweet:
     def __init__(self, id, user, text):
-        self.id = id
+        self.id = int(id)
         self.date = int(time.time() * 1000)
         self.user = user
         self.text = text
