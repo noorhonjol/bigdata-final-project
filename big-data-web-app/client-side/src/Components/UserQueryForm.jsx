@@ -41,7 +41,7 @@ export default function UserQueryForm({ setData }) {
         }, pollingInterval);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [queryType, queryText]);
 
     const handleChange = (event) => {
         setQueryType(event.target.value);
