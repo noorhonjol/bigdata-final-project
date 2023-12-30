@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import NavBar from "./NavBar";
+import NavBar from "./Components/NavBar";
 
 // Layout Component
 export function Layout() {

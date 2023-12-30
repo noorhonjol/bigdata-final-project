@@ -2,12 +2,16 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const { Kafka } = require('kafkajs');
-const HandleQuery = require('./HandleQuery');
+const {HandleQuery} = require('./HandleQuery');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const Tweet = require('./tweetSchema');
+
 // Connect to MongoDB
-mongoose.connect('mongodb://127.0.0.1:27017/zeft').then(() => console.log('Connected to MongoDB...'))
+mongoose.connect('mongodb://127.0.0.1:27017/big-data')
+.then(() => console.log('Connected to MongoDB...'))
 .catch(err => console.error('Could not connect to MongoDB...', err));
+
 
 const app = express();
 
@@ -17,6 +21,7 @@ app.use(cors({
     origin: 'http://localhost:5173',
     credentials: true
 }));
+
 const server = http.createServer(app);
 
 const io = socketIo(server, {
@@ -24,6 +29,7 @@ const io = socketIo(server, {
         origin: 'http://localhost:5173',
     }
 });
+// module.exports = io;
 
 async function run() {
     // Create a Kafka client
@@ -39,7 +45,7 @@ async function run() {
     await consumer.connect();
 
     // Subscribe to a topic
-    await consumer.subscribe({ topic: 't2'});
+    await consumer.subscribe({ topic: 'top-users-tweets-topic'});
 
     // Consume messages
     await consumer.run({
@@ -57,9 +63,7 @@ run().catch(console.error);
 // Start the server
 const PORT = process.env.PORT || 3000;
 
-
 app.post("/query",HandleQuery)
-
 
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

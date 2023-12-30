@@ -1,7 +1,7 @@
 import { Route, RouterProvider, createBrowserRouter, createRoutesFromElements } from "react-router-dom";
-import MostUsersTweetsPage from "./MostUsersTweetsPage";
+import MostUsersTweetsPage from "./Pages/MostUsersTweetsPage";
 import { Layout } from "./Layout";
-import UserQueryFilter from "./UserQueryFilter";
+import UserQueryFilter from "./Pages/UserQueryFilter";
 
 const router=createBrowserRouter(
   createRoutesFromElements(

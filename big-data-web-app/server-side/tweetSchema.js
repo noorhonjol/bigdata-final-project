@@ -23,6 +23,6 @@ const tweetSchema = new mongoose.Schema({
     }
 });
 
-const Tweet = mongoose.model('Tweet', tweetSchema, 'zeft');
+const Tweet = mongoose.model('Tweet', tweetSchema, 'tweets');
 
 module.exports = Tweet;

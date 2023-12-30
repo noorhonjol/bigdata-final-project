@@ -102,7 +102,7 @@ object Main {
       .select("data.*")
 
     //convert date from string format to date object in dataframe
-    val dfWithDate = dfWithTimestamp.withColumn("date",date_format($"date", "yyyy-MM-dd'T'HH:mm:ss"))
+    val dfWithDate = dfWithTimestamp.withColumn("date",to_timestamp($"date", "yyyy-MM-dd'T'HH:mm:ss"))
 
     dfWithDate
   }

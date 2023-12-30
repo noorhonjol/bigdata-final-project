@@ -11,36 +11,35 @@ async function aggregateTweets(matchCondition, dateRange = null) {
 
     return await Tweet.aggregate([
         { $match: matchCondition },
+        { $project: {
+            year: { $year: "$date" },
+            month: { $month: "$date" },
+            day: { $dayOfMonth: "$date" }
+        }},
         { $group: { 
-            _id: "$date",
+            _id: { year: "$year", month: "$month", day: "$day" },
             count: { $sum: 1 }
-        } },
-        { $sort: { _id: 1 } }
+        }},
+        { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } }
     ]);
 }
 
-module.exports = async function HandleQuery(req, res) {
-    const { queryType } = req.body;
+async function HandleQuery(req, res) {
+    const { queryType,queryText } = req.body;
     let tweetsRes = [];
-
-    switch (queryType) {
+    switch (parseInt(queryType)) {
         case 1:
-            const { text } = req.body;
-            tweetsRes = await aggregateTweets({ text: { $regex: text, $options: 'i' } });
+            tweetsRes = await aggregateTweets({ text: { $regex: queryText, $options: 'i' } });
             break;
-        case 2: 
-            const { startDate, endDate } = req.body;
-            tweetsRes = await aggregateTweets({}, { startDate, endDate });
+        case 2:
+            tweetsRes = await aggregateTweets({ user: { $regex: queryText, $options: 'i' } });
             break;
         case 3:
-            const { username } = req.body;
-            tweetsRes = await aggregateTweets({ user: { $regex: username, $options: 'i' } });
-            break;
-        case 4:
-            const { numberRetweets } = req.body;
-            tweetsRes = await aggregateTweets({ Retweets: numberRetweets });
+            tweetsRes = await aggregateTweets({ retweets: parseInt(queryText) });
             break;
     }
-
     res.json(tweetsRes);
 };
+
+
+module.exports={HandleQuery}
