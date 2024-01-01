@@ -1,5 +1,7 @@
 const Tweet = require("./tweetSchema");
 
+
+// aggregate tweets by match condition and date range
 async function aggregateTweets(matchCondition, dateRange = null) {
 
     if (dateRange) {
@@ -24,6 +26,7 @@ async function aggregateTweets(matchCondition, dateRange = null) {
     ]);
 }
 
+// handle query request
 async function HandleQuery(req, res) {
     const { queryType,queryText } = req.body;
     let tweetsRes = [];

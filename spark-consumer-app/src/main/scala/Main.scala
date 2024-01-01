@@ -29,6 +29,9 @@ object Main {
     BasicConfigurator.configure(new NullAppender)
 
     val spark = createSparkSession()
+    import spark.implicits._
+
+    var dataBaseDf = readFromMongoDb(spark, Configs.databaseName, Configs.collectionName).select($"id",$"date",$"user",$"text",$"retweets")
 
     spark.conf.set("spark.sql.shuffle.partitions", "2")
 
@@ -36,10 +39,10 @@ object Main {
 
     val query = dfFromStream.writeStream.foreachBatch { (batchDF: DataFrame, _: Long) =>
 
-      //write coming data from kafka to database
       writeToMongoDb(batchDF, Configs.databaseName, Configs.collectionName)
 
-      statisticsOperationAndSendToKafka(spark)
+      //make statistics on data and send it to kafka and save it in dataBaseDf that contain all data
+      dataBaseDf=statisticsOperationAndSendToKafka(dataBaseDf,batchDF)
 
       batchDF.show()
 
@@ -53,27 +56,30 @@ object Main {
   /*
     this function is main function in program
     it do this :
-    1-read all database collection
-    2-make the required statistics on already read data (get most 20 users make that makes tweets)
-    3-send it to another topic in kafka to use it in backend later
+    1-make the required statistics on already read data (get most 20 users make that makes tweets)
+    2-send it to another topic in kafka to use it in backend later
    */
 
-  private def statisticsOperationAndSendToKafka(spark: SparkSession): Unit = {
-    val dataBaseDf = readFromMongoDb(spark, Configs.databaseName, Configs.collectionName)
-    //early return when data base is not have data
-    if(dataBaseDf.count()==0){
-      return
+  private def statisticsOperationAndSendToKafka(dataBaseDf:DataFrame,newData: DataFrame): DataFrame = {
+    // Union operation with newData
+    val updatedDataBaseDf = dataBaseDf.union(newData)
+
+    // Early return if the DataFrame is empty
+    if (updatedDataBaseDf.count() == 0) {
+      return updatedDataBaseDf
     }
 
-    val statsDf = aggregateData(dataBaseDf)
+    val statsDf = aggregateData(updatedDataBaseDf)
 
-    //this code convert whole dataFrame to one row of json format
+    // Convert whole dataFrame to one row of json format
     val aggregatedDF = convertDataFrameForKafka(statsDf)
 
     statsDf.show()
 
-    //send data statistics data to kafka
+    // Send data statistics to Kafka
     produceToKafka(aggregatedDF, Configs.topicPublished)
+    
+    updatedDataBaseDf
   }
 
   private def createSparkSession(): SparkSession = {

@@ -6,6 +6,7 @@ const {HandleQuery} = require('./HandleQuery');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const Tweet = require('./tweetSchema');
+const path = require('path');
 
 // Connect to MongoDB
 mongoose.connect('mongodb://127.0.0.1:27017/big-data')
@@ -29,8 +30,6 @@ const io = socketIo(server, {
         origin: 'http://localhost:5173',
     }
 });
-// module.exports = io;
-
 async function run() {
     // Create a Kafka client
     const kafka = new Kafka({
@@ -50,9 +49,7 @@ async function run() {
     // Consume messages
     await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
-            // console.log({
-            //     value: message.value.toString(),
-            // });
+            // send it to the client via socket.io
             io.emit('dbUpdate', message.value.toString());
         },
     });
@@ -64,6 +61,7 @@ run().catch(console.error);
 const PORT = process.env.PORT || 3000;
 
 app.post("/query",HandleQuery)
+
 
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
