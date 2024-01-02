@@ -1,8 +1,8 @@
 import org.apache.log4j.BasicConfigurator
 import org.apache.log4j.varia.NullAppender
-import org.apache.spark.sql.{DataFrame,  SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{ IntegerType, LongType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructField, StructType}
 
 object Main {
 
@@ -30,8 +30,13 @@ object Main {
 
     val spark = createSparkSession()
     import spark.implicits._
+    var dataBaseDf:DataFrame = null;
 
-    var dataBaseDf = readFromMongoDb(spark, Configs.databaseName, Configs.collectionName).select($"id",$"date",$"user",$"text",$"retweets")
+    try {
+      dataBaseDf = readFromMongoDb(spark, Configs.databaseName, Configs.collectionName).select($"id",$"date",$"user",$"text",$"retweets")
+    } catch {
+      case e: Exception => println("database is empty")
+    }
 
     spark.conf.set("spark.sql.shuffle.partitions", "2")
 
@@ -41,8 +46,13 @@ object Main {
 
       writeToMongoDb(batchDF, Configs.databaseName, Configs.collectionName)
 
-      //make statistics on data and send it to kafka and save it in dataBaseDf that contain all data
-      dataBaseDf=statisticsOperationAndSendToKafka(dataBaseDf,batchDF)
+      if(dataBaseDf==null) {
+        dataBaseDf=batchDF
+      } else{
+        //make statistics on data and send it to kafka and save it in dataBaseDf that contain all data
+        dataBaseDf=statisticsOperationAndSendToKafka(dataBaseDf,batchDF)
+      }
+
 
       batchDF.show()
 
@@ -124,10 +134,10 @@ object Main {
   }
   // read data from specific database and specific collection
   private def readFromMongoDb(spark: SparkSession, databaseName: String, collectionName: String): DataFrame = {
-    spark.read.format("mongodb")
-      .option("database", databaseName)
-      .option("collection", collectionName)
-      .load()
+      spark.read.format("mongodb")
+        .option("database", databaseName)
+        .option("collection", collectionName)
+        .load()
   }
 
   //send to specific topic a specific dataframe
